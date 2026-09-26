@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f06292">
+<link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="icon-192.png">
+<title>MiListaCompras</title>
+<style>
+:root{--pink:#f06292;--pink2:#fce4ec;--ink:#332b31;--muted:#776b72;--card:#fff;--bg:#fff8fa;--line:#f2dce4;--green:#4f8a63}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+.app{max-width:680px;margin:auto;padding:18px 14px 110px}.head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 2px 18px}.brand h1{font-size:27px;margin:0}.brand p{margin:3px 0 0;color:var(--muted);font-size:14px}
+button,input,select{font:inherit}.btn{border:0;border-radius:14px;padding:11px 14px;font-weight:700;cursor:pointer}.clear{background:#fff;border:1px solid #efb9ca;color:#b52f5a}.addbox{background:var(--card);padding:14px;border-radius:20px;box-shadow:0 5px 22px #8e4b6112;margin-bottom:16px}.row{display:grid;grid-template-columns:1fr 150px 48px;gap:8px}.row input,.row select{min-width:0;border:1px solid var(--line);border-radius:13px;padding:12px;background:#fff}.plus{background:var(--pink);color:#fff;font-size:22px;padding:0}
+.cat{margin:18px 0}.cat-title{display:flex;align-items:center;justify-content:space-between;margin:0 4px 8px}.cat-title h2{font-size:17px;margin:0}.count{font-size:12px;color:var(--muted);background:#fff;padding:4px 8px;border-radius:999px;border:1px solid var(--line)}
+.list{display:grid;gap:8px}.item{display:flex;align-items:center;gap:11px;background:#fff;padding:11px 12px;border-radius:15px;border:1px solid #f6e7ec}.item input[type=checkbox]{width:22px;height:22px;accent-color:var(--green)}.txt{flex:1;font-size:16px}.done .txt{text-decoration:line-through;color:#9a8f94}.del{border:0;background:transparent;color:#c26a85;font-size:20px;padding:4px 8px}.empty{color:#9b8e94;font-size:13px;padding:4px 8px}
+.install{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;width:min(650px,calc(100% - 28px));background:#332b31;color:white;border-radius:18px;padding:12px 14px;display:none;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 10px 30px #0003}.install button{background:#fff;color:#332b31;border:0;border-radius:12px;padding:9px 12px;font-weight:800}
+@media(max-width:480px){.row{grid-template-columns:1fr 46px}.row select{grid-column:1/2}.brand h1{font-size:24px}}
+</style></head>
+<body><main class="app">
+<div class="head"><div class="brand"><h1>🛒 MiListaCompras</h1><p>Tu lista semanal, siempre a mano.</p></div><button class="btn clear" id="clear">Limpiar</button></div>
+<section class="addbox"><div class="row"><input id="item" placeholder="Ej. Tomates, pan, yogur…" autocomplete="off"><select id="category"></select><button class="btn plus" id="add" aria-label="Agregar">＋</button></div></section>
+<div id="categories"></div>
+</main><div class="install" id="install"><span>Instala <b>MiListaCompras</b> en tu pantalla principal.</span><button id="installBtn">Instalar</button></div>
+<script>
+const CATS=[['🥬','Verduras'],['🍎','Frutas'],['🛒','Mercadería'],['🥖','Cosas para el pan'],['🥛','Lácteos'],['🥩','Carnes y proteínas'],['🧼','Aseo y hogar'],['📦','Otros']];
+const $=s=>document.querySelector(s), key='milistacompras-v1'; let data=JSON.parse(localStorage.getItem(key)||'[]');
+$('#category').innerHTML=CATS.map(c=>`<option value="${c[1]}">${c[0]} ${c[1]}</option>`).join('');
+function save(){localStorage.setItem(key,JSON.stringify(data));render()}
+function render(){const root=$('#categories');root.innerHTML='';CATS.forEach(([ico,name])=>{const items=data.filter(x=>x.cat===name);const sec=document.createElement('section');sec.className='cat';sec.innerHTML=`<div class="cat-title"><h2>${ico} ${name}</h2><span class="count">${items.filter(x=>x.done).length}/${items.length}</span></div><div class="list"></div>`;const list=sec.querySelector('.list');if(!items.length)list.innerHTML='<div class="empty">Sin productos todavía</div>';items.forEach(x=>{const d=document.createElement('div');d.className='item'+(x.done?' done':'');d.innerHTML=`<input type="checkbox" ${x.done?'checked':''}><span class="txt"></span><button class="del" aria-label="Eliminar">×</button>`;d.querySelector('.txt').textContent=x.text;d.querySelector('input').onchange=e=>{x.done=e.target.checked;save()};d.querySelector('.del').onclick=()=>{data=data.filter(y=>y.id!==x.id);save()};list.appendChild(d)});root.appendChild(sec)})}
+function add(){const input=$('#item'),text=input.value.trim();if(!text)return;data.push({id:Date.now()+Math.random(),text,cat:$('#category').value,done:false});input.value='';save();input.focus()}
+$('#add').onclick=add;$('#item').addEventListener('keydown',e=>{if(e.key==='Enter')add()});$('#clear').onclick=()=>{if(confirm('¿Quieres borrar toda la lista de compras?')){data=[];save()}};render();
+if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js');let deferred;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e;$('#install').style.display='flex'});$('#installBtn').onclick=async()=>{if(!deferred)return;deferred.prompt();await deferred.userChoice;deferred=null;$('#install').style.display='none'};
+</script></body></html>
