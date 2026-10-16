@@ -1,32 +1,497 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f06292">
-<link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>MiListaCompras</title>
 <style>
-:root{--pink:#f06292;--pink2:#fce4ec;--ink:#332b31;--muted:#776b72;--card:#fff;--bg:#fff8fa;--line:#f2dce4;--green:#4f8a63}
-*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
-.app{max-width:680px;margin:auto;padding:18px 14px 110px}.head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 2px 18px}.brand h1{font-size:27px;margin:0}.brand p{margin:3px 0 0;color:var(--muted);font-size:14px}
-button,input,select{font:inherit}.btn{border:0;border-radius:14px;padding:11px 14px;font-weight:700;cursor:pointer}.clear{background:#fff;border:1px solid #efb9ca;color:#b52f5a}.addbox{background:var(--card);padding:14px;border-radius:20px;box-shadow:0 5px 22px #8e4b6112;margin-bottom:16px}.row{display:grid;grid-template-columns:1fr 150px 48px;gap:8px}.row input,.row select{min-width:0;border:1px solid var(--line);border-radius:13px;padding:12px;background:#fff}.plus{background:var(--pink);color:#fff;font-size:22px;padding:0}
-.cat{margin:18px 0}.cat-title{display:flex;align-items:center;justify-content:space-between;margin:0 4px 8px}.cat-title h2{font-size:17px;margin:0}.count{font-size:12px;color:var(--muted);background:#fff;padding:4px 8px;border-radius:999px;border:1px solid var(--line)}
-.list{display:grid;gap:8px}.item{display:flex;align-items:center;gap:11px;background:#fff;padding:11px 12px;border-radius:15px;border:1px solid #f6e7ec}.item input[type=checkbox]{width:22px;height:22px;accent-color:var(--green)}.txt{flex:1;font-size:16px}.done .txt{text-decoration:line-through;color:#9a8f94}.del{border:0;background:transparent;color:#c26a85;font-size:20px;padding:4px 8px}.empty{color:#9b8e94;font-size:13px;padding:4px 8px}
-.install{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;width:min(650px,calc(100% - 28px));background:#332b31;color:white;border-radius:18px;padding:12px 14px;display:none;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 10px 30px #0003}.install button{background:#fff;color:#332b31;border:0;border-radius:12px;padding:9px 12px;font-weight:800}
-@media(max-width:480px){.row{grid-template-columns:1fr 46px}.row select{grid-column:1/2}.brand h1{font-size:24px}}
-</style></head>
-<body><main class="app">
-<div class="head"><div class="brand"><h1>🛒 MiListaCompras</h1><p>Tu lista semanal, siempre a mano.</p></div><button class="btn clear" id="clear">Limpiar</button></div>
-<section class="addbox"><div class="row"><input id="item" placeholder="Ej. Tomates, pan, yogur…" autocomplete="off"><select id="category"></select><button class="btn plus" id="add" aria-label="Agregar">＋</button></div></section>
-<div id="categories"></div>
-</main><div class="install" id="install"><span>Instala <b>MiListaCompras</b> en tu pantalla principal.</span><button id="installBtn">Instalar</button></div>
-<script>
-const CATS=[['🥬','Verduras'],['🍎','Frutas'],['🛒','Mercadería'],['🥖','Cosas para el pan'],['🥛','Lácteos'],['🥩','Carnes y proteínas'],['🧼','Aseo y hogar'],['📦','Otros']];
-const $=s=>document.querySelector(s), key='milistacompras-v1'; let data=JSON.parse(localStorage.getItem(key)||'[]');
-$('#category').innerHTML=CATS.map(c=>`<option value="${c[1]}">${c[0]} ${c[1]}</option>`).join('');
-function save(){localStorage.setItem(key,JSON.stringify(data));render()}
-function render(){const root=$('#categories');root.innerHTML='';CATS.forEach(([ico,name])=>{const items=data.filter(x=>x.cat===name);const sec=document.createElement('section');sec.className='cat';sec.innerHTML=`<div class="cat-title"><h2>${ico} ${name}</h2><span class="count">${items.filter(x=>x.done).length}/${items.length}</span></div><div class="list"></div>`;const list=sec.querySelector('.list');if(!items.length)list.innerHTML='<div class="empty">Sin productos todavía</div>';items.forEach(x=>{const d=document.createElement('div');d.className='item'+(x.done?' done':'');d.innerHTML=`<input type="checkbox" ${x.done?'checked':''}><span class="txt"></span><button class="del" aria-label="Eliminar">×</button>`;d.querySelector('.txt').textContent=x.text;d.querySelector('input').onchange=e=>{x.done=e.target.checked;save()};d.querySelector('.del').onclick=()=>{data=data.filter(y=>y.id!==x.id);save()};list.appendChild(d)});root.appendChild(sec)})}
-function add(){const input=$('#item'),text=input.value.trim();if(!text)return;data.push({id:Date.now()+Math.random(),text,cat:$('#category').value,done:false});input.value='';save();input.focus()}
-$('#add').onclick=add;$('#item').addEventListener('keydown',e=>{if(e.key==='Enter')add()});$('#clear').onclick=()=>{if(confirm('¿Quieres borrar toda la lista de compras?')){data=[];save()}};render();
-if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js');let deferred;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e;$('#install').style.display='flex'});$('#installBtn').onclick=async()=>{if(!deferred)return;deferred.prompt();await deferred.userChoice;deferred=null;$('#install').style.display='none'};
-</script></body></html>
+:root {
+  --pink:#f06292;
+  --pink2:#fce4ec;
+  --ink:#332b31;
+  --muted:#776b72;
+  --card:#fff;
+  --bg:#fff8fa;
+  --line:#f2dce4;
+  --green:#4f8a63;
+}
+* {box-sizing:border-box}
+body {
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  background:var(--bg);
+  color:var(--ink);
+}
+.app {
+  max-width:680px;
+  margin:auto;
+  padding:18px 14px 110px;
+}
+.head {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin:4px 2px 18px;
+}
+.brand h1 {font-size:27px;margin:0}
+.brand p {margin:3px 0 0;color:var(--muted);font-size:14px}
+button,input,select {font:inherit}
+.btn {
+  border:0;
+  border-radius:14px;
+  padding:11px 14px;
+  font-weight:700;
+  cursor:pointer;
+}
+.clear {
+  background:#fff;
+  border:1px solid #efb9ca;
+  color:#b52f5a;
+}
+.addbox {
+  background:var(--card);
+  padding:14px;
+  border-radius:20px;
+  box-shadow:0 5px 22px #8e4b6112;
+  margin-bottom:16px;
+}
+.row {
+  display:grid;
+  grid-template-columns:1fr 150px 48px;
+  gap:8px;
+}
+.row input,.row select {
+  min-width:0;
+  border:1px solid var(--line);
+  border-radius:13px;
+  padding:12px;
+  background:#fff;
+}
+.plus {
+  background:var(--pink);
+  color:#fff;
+  font-size:22px;
+  padding:0;
+}
+.cat {margin:18px 0}
+.cat-title {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin:0 4px 8px;
+}
+.cat-title h2 {font-size:17px;margin:0}
+.count {
+  font-size:12px;
+  color:var(--muted);
+  background:#fff;
+  padding:4px 8px;
+  border-radius:999px;
+  border:1px solid var(--line);
+}
+.list {display:grid;gap:8px}
+.item {
+  display:flex;
+  align-items:center;
+  gap:11px;
+  background:#fff;
+  padding:11px 12px;
+  border-radius:15px;
+  border:1px solid #f6e7ec;
+}
+.item input[type=checkbox] {
+  width:22px;
+  height:22px;
+  accent-color:var(--green);
+}
+.txt {flex:1;font-size:16px}
+.done .txt {
+  text-decoration:line-through;
+  color:#9a8f94;
+}
+.del {
+  border:0;
+  background:transparent;
+  color:#c26a85;
+  font-size:20px;
+  padding:4px 8px;
+}
+.empty {
+  color:#9b8e94;
+  font-size:13px;
+  padding:4px 8px;
+}
+.login {
+  background:white;
+  padding:16px;
+  border-radius:18px;
+  margin-bottom:14px;
+  border:1px solid var(--line);
+}
+.login input {
+  width:100%;
+  padding:12px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  margin:6px 0;
+}
+.login button,.smallbtn {
+  background:var(--pink);
+  color:white;
+  border:0;
+  border-radius:12px;
+  padding:10px 14px;
+  font-weight:700;
+}
+.status {
+  font-size:13px;
+  color:var(--muted);
+  margin:8px 0;
+}
+.hide {display:none!important}
+.actions {
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:12px;
+}
+.actions button {font-size:13px}
+.warn {color:#a12c50;font-size:13px}
+.install {
+  position:fixed;
+  left:50%;
+  transform:translateX(-50%);
+  bottom:18px;
+  width:min(650px,calc(100% - 28px));
+  background:#332b31;
+  color:white;
+  border-radius:18px;
+  padding:12px 14px;
+  display:none;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  box-shadow:0 10px 30px #0003;
+}
+.install button {
+  background:#fff;
+  color:#332b31;
+  border:0;
+  border-radius:12px;
+  padding:9px 12px;
+  font-weight:800;
+}
+@media(max-width:480px) {
+  .row {grid-template-columns:1fr 46px}
+  .row select {grid-column:1/2}
+  .brand h1 {font-size:24px}
+}
+</style>
+</head>
+<body>
+<main class="app">
+  <div class="head">
+    <div class="brand">
+      <h1>🛒 MiListaCompras</h1>
+      <p>Tu lista semanal, siempre a mano.</p>
+    </div>
+    <button class="btn clear" id="clear" disabled>Limpiar</button>
+  </div>
+
+  <section class="login" id="login">
+    <strong>🔐 Iniciar sesión</strong>
+    <p class="status">Usa el correo y la contraseña creados en Firebase.</p>
+    <input type="email" id="email" placeholder="Correo electrónico" autocomplete="username">
+    <input type="password" id="password" placeholder="Contraseña" autocomplete="current-password">
+    <button id="signIn">Entrar</button>
+    <p class="warn" id="loginError" role="alert"></p>
+  </section>
+
+  <div id="shared" class="hide">
+    <div class="actions">
+      <span class="status" id="who"></span>
+      <button class="smallbtn" id="signOut">Cerrar sesión</button>
+      <button class="smallbtn" id="importLocal">Importar lista anterior</button>
+    </div>
+    <p class="status" id="syncStatus" role="status">Conectando…</p>
+
+    <section class="addbox">
+      <div class="row">
+        <input id="item" placeholder="Ej. Tomates, pan, yogur…" autocomplete="off">
+        <select id="category"></select>
+        <button class="btn plus" id="add" aria-label="Agregar">＋</button>
+      </div>
+    </section>
+    <div id="categories"></div>
+  </div>
+</main>
+
+<div class="install" id="install">
+  <span>Instala <b>MiListaCompras</b> en tu pantalla principal.</span>
+  <button id="installBtn">Instalar</button>
+</div>
+
+<script type="module">
+import {initializeApp} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
+import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,signOut} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+import {getFirestore,collection,onSnapshot,addDoc,updateDoc,deleteDoc,doc,getDocs,writeBatch} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDpK349t0i753FarUwWFnRhTmJ04UAW-I8",
+  authDomain: "milistadecompras-a460c.firebaseapp.com",
+  projectId: "milistadecompras-a460c",
+  storageBucket: "milistadecompras-a460c.firebasestorage.app",
+  messagingSenderId: "523779878079",
+  appId: "1:523779878079:web:c90e3aea3867c147bc2a0a"
+};
+
+const ALLOWED = [
+  "g31wuuAJBBc5nWj4yhwW279Bj1m2",
+  "8WCXFbSYVISPdufM4KoIcXkH6oE3"
+];
+
+const CATS = [
+  ["🥬","Verduras"],
+  ["🍎","Frutas"],
+  ["🛒","Mercadería"],
+  ["🥖","Cosas para el pan"],
+  ["🥛","Lácteos"],
+  ["🥩","Carnes y proteínas"],
+  ["🧼","Aseo y hogar"],
+  ["📦","Otros"]
+];
+
+const $ = s => document.querySelector(s);
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const itemsRef = collection(db,"listas","familiar","productos");
+
+let data = [];
+let unsubscribe = null;
+let ready = false;
+
+$("#category").innerHTML = CATS.map(c =>
+  `<option value="${c[1]}">${c[0]} ${c[1]}</option>`
+).join("");
+
+function status(t) {
+  $("#syncStatus").textContent = t;
+}
+
+function render() {
+  const root = $("#categories");
+  root.innerHTML = "";
+
+  CATS.forEach(([ico,name]) => {
+    const items = data.filter(x => x.cat === name);
+    const sec = document.createElement("section");
+    sec.className = "cat";
+    sec.innerHTML = `
+      <div class="cat-title">
+        <h2>${ico} ${name}</h2>
+        <span class="count">${items.filter(x=>x.done).length}/${items.length}</span>
+      </div>
+      <div class="list"></div>`;
+
+    const list = sec.querySelector(".list");
+    if (!items.length) {
+      list.innerHTML = '<div class="empty">Sin productos todavía</div>';
+    }
+
+    items.forEach(x => {
+      const d = document.createElement("div");
+      d.className = "item" + (x.done ? " done" : "");
+      d.innerHTML = `
+        <input type="checkbox" ${x.done ? "checked" : ""}>
+        <span class="txt"></span>
+        <button class="del" aria-label="Eliminar">×</button>`;
+
+      d.querySelector(".txt").textContent = x.text;
+
+      d.querySelector("input").onchange = async e => {
+        try {
+          await updateDoc(doc(itemsRef,x.id),{done:e.target.checked});
+        } catch(err) {
+          status("Error al actualizar: " + err.message);
+        }
+      };
+
+      d.querySelector(".del").onclick = async () => {
+        try {
+          await deleteDoc(doc(itemsRef,x.id));
+        } catch(err) {
+          status("Error al eliminar: " + err.message);
+        }
+      };
+
+      list.appendChild(d);
+    });
+    root.appendChild(sec);
+  });
+}
+
+async function add() {
+  if (!ready) return;
+  const input = $("#item");
+  const text = input.value.trim();
+  if (!text) return;
+
+  try {
+    await addDoc(itemsRef,{
+      text:text.slice(0,150),
+      cat:$("#category").value,
+      done:false,
+      createdAt:Date.now()
+    });
+    input.value = "";
+    input.focus();
+  } catch(err) {
+    status("No se pudo agregar: " + err.message);
+  }
+}
+
+$("#add").onclick = add;
+$("#item").addEventListener("keydown",e => {
+  if (e.key === "Enter") add();
+});
+
+$("#clear").onclick = async () => {
+  if (!ready) return;
+  if (!confirm("¿Borrar TODA la lista compartida en ambos celulares?")) return;
+
+  try {
+    status("Limpiando…");
+    const snap = await getDocs(itemsRef);
+    for(let i=0;i<snap.docs.length;i+=400) {
+      const batch = writeBatch(db);
+      snap.docs.slice(i,i+400).forEach(d => batch.delete(d.ref));
+      await batch.commit();
+    }
+    status("Lista compartida actualizada");
+  } catch(err) {
+    status("Error al limpiar: " + err.message);
+  }
+};
+
+$("#signIn").onclick = async () => {
+  const email = $("#email").value.trim();
+  const pass = $("#password").value;
+  $("#loginError").textContent = "";
+
+  try {
+    await signInWithEmailAndPassword(auth,email,pass);
+    $("#password").value = "";
+  } catch(e) {
+    $("#loginError").textContent =
+      "No se pudo iniciar sesión. Revisa correo y contraseña.";
+  }
+};
+
+$("#signOut").onclick = () => signOut(auth);
+
+onAuthStateChanged(auth,user => {
+  if(unsubscribe) {
+    unsubscribe();
+    unsubscribe = null;
+  }
+
+  ready = false;
+  data = [];
+  render();
+
+  const allowed = !!user && ALLOWED.includes(user.uid);
+  $("#login").classList.toggle("hide",allowed);
+  $("#shared").classList.toggle("hide",!allowed);
+  $("#clear").disabled = !allowed;
+
+  if(!user) return;
+
+  if(!allowed) {
+    $("#loginError").textContent =
+      "Esta cuenta no está autorizada para esta lista.";
+    signOut(auth);
+    return;
+  }
+
+  $("#who").textContent = "Sesión: " + user.email;
+  status("Sincronizando…");
+
+  unsubscribe = onSnapshot(itemsRef,snap => {
+    data = snap.docs.map(d => ({
+      id:d.id,...d.data()
+    })).sort((a,b) =>
+      (a.createdAt||0)-(b.createdAt||0)
+    );
+    ready = true;
+    render();
+    status(snap.metadata.fromCache
+      ? "Mostrando datos guardados (sin conexión)"
+      : "✓ Lista sincronizada");
+  },e => {
+    ready = false;
+    status("No se pudo sincronizar: " + e.message);
+  });
+});
+
+$("#importLocal").onclick = async () => {
+  if(!ready) return;
+  let previous = [];
+
+  try {
+    previous = JSON.parse(
+      localStorage.getItem("milistacompras-v1") || "[]"
+    );
+  } catch {}
+
+  if(!Array.isArray(previous) || !previous.length) {
+    alert("No hay productos antiguos guardados en este navegador.");
+    return;
+  }
+
+  if(!confirm(`¿Importar ${previous.length} productos antiguos a la lista compartida? Hazlo solo una vez para evitar duplicados.`)) return;
+
+  try {
+    let count = 0;
+    for(const x of previous) {
+      if(typeof x.text !== "string" || !x.text.trim()) continue;
+      await addDoc(itemsRef,{
+        text:x.text.trim().slice(0,150),
+        cat:CATS.some(c=>c[1]===x.cat) ? x.cat : "Otros",
+        done:!!x.done,
+        createdAt:Date.now()+count
+      });
+      count++;
+    }
+    alert(`Se importaron ${count} productos. La copia antigua se conserva en este dispositivo.`);
+  } catch(e) {
+    status("Importación parcial o fallida: " + e.message);
+  }
+};
+
+if("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("./sw.js");
+}
+
+let deferred;
+window.addEventListener("beforeinstallprompt",e => {
+  e.preventDefault();
+  deferred = e;
+  $("#install").style.display = "flex";
+});
+
+$("#installBtn").onclick = async () => {
+  if(!deferred) return;
+  deferred.prompt();
+  await deferred.userChoice;
+  deferred = null;
+  $("#install").style.display = "none";
+};
+</script>
+</body>
+</html>
